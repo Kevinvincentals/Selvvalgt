@@ -6,7 +6,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -16,7 +16,7 @@
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
-        h1, h2 {
+        h1, h2, h3 {
             color: #333;
         }
         .header {
@@ -69,18 +69,250 @@
         .logout-btn {
             background-color: #f44336;
         }
+        .flow-container {
+            display: flex;
+            margin-top: 20px;
+        }
+        .flow-steps {
+            flex: 1;
+            min-width: 200px;
+            margin-right: 20px;
+        }
+        .flow-details {
+            flex: 2;
+        }
+        .flow-step {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            background-color: #f1f8ff;
+            position: relative;
+        }
+        .flow-step.completed {
+            background-color: #e9f7ef;
+            border-left: 4px solid #4CAF50;
+        }
+        .flow-step.current {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+        .flow-step.pending {
+            background-color: #f8f9fa;
+            border-left: 4px solid #6c757d;
+            opacity: 0.7;
+        }
+        .step-number {
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            line-height: 25px;
+            text-align: center;
+            border-radius: 50%;
+            background-color: #6c757d;
+            color: white;
+            margin-right: 10px;
+        }
+        .step-number.completed {
+            background-color: #4CAF50;
+        }
+        .step-number.current {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .flow-log {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        .log-time {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-right: 10px;
+        }
+        .refresh-btn {
+            background-color: #007bff;
+            font-size: 0.9em;
+            padding: 5px 10px;
+            margin-left: 10px;
+        }
+        .two-columns {
+            display: flex;
+            gap: 20px;
+        }
+        .column {
+            flex: 1;
+        }
+        .metadata {
+            background-color: #e6f7ff;
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #1890ff;
+        }
+        .metadata h3 {
+            color: #1890ff;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .metadata ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+        .metadata li {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .metadata li:last-child {
+            border-bottom: none;
+        }
     </style>
+    <script>
+        // Auto-refresh the flow logs every 3 seconds
+        function setupAutoRefresh() {
+            if (document.getElementById('flow-log')) {
+                setInterval(() => {
+                    fetch('/flow-status')
+                        .then(response => response.json())
+                        .then(data => {
+                            const logContainer = document.getElementById('flow-log');
+                            if (logContainer && data.logs && data.logs.length > 0) {
+                                logContainer.innerHTML = '';
+                                
+                                data.logs.forEach(entry => {
+                                    const logEntry = document.createElement('div');
+                                    logEntry.className = 'log-entry';
+                                    
+                                    const timeSpan = document.createElement('span');
+                                    timeSpan.className = 'log-time';
+                                    timeSpan.textContent = entry.timestamp;
+                                    
+                                    logEntry.appendChild(timeSpan);
+                                    logEntry.appendChild(document.createTextNode(entry.step));
+                                    
+                                    if (Object.keys(entry.details).length > 0) {
+                                        const details = document.createElement('pre');
+                                        details.textContent = JSON.stringify(entry.details, null, 2);
+                                        logEntry.appendChild(details);
+                                    }
+                                    
+                                    logContainer.appendChild(logEntry);
+                                });
+                                
+                                // Update step indicators
+                                updateStepIndicators(data.current_step);
+                            }
+                        });
+                }, 3000);
+            }
+        }
+        
+        function updateStepIndicators(currentStep) {
+            const steps = document.querySelectorAll('.flow-step');
+            steps.forEach((step, index) => {
+                const stepNum = step.getAttribute('data-step');
+                const numElement = step.querySelector('.step-number');
+                
+                if (stepNum < currentStep) {
+                    step.className = 'flow-step completed';
+                    if (numElement) numElement.className = 'step-number completed';
+                } else if (stepNum == currentStep) {
+                    step.className = 'flow-step current';
+                    if (numElement) numElement.className = 'step-number current';
+                } else {
+                    step.className = 'flow-step pending';
+                    if (numElement) numElement.className = 'step-number';
+                }
+            });
+        }
+        
+        function refreshFlow() {
+            fetch('/flow-status')
+                .then(response => response.json())
+                .then(data => {
+                    const logContainer = document.getElementById('flow-log');
+                    if (logContainer) {
+                        logContainer.innerHTML = '';
+                        
+                        if (data.logs && data.logs.length > 0) {
+                            data.logs.forEach(entry => {
+                                const logEntry = document.createElement('div');
+                                logEntry.className = 'log-entry';
+                                
+                                const timeSpan = document.createElement('span');
+                                timeSpan.className = 'log-time';
+                                timeSpan.textContent = entry.timestamp;
+                                
+                                logEntry.appendChild(timeSpan);
+                                logEntry.appendChild(document.createTextNode(entry.step));
+                                
+                                if (Object.keys(entry.details).length > 0) {
+                                    const details = document.createElement('pre');
+                                    details.textContent = JSON.stringify(entry.details, null, 2);
+                                    logEntry.appendChild(details);
+                                }
+                                
+                                logContainer.appendChild(logEntry);
+                            });
+                        } else {
+                            logContainer.innerHTML = '<div class="log-entry">No OAuth flow logs yet.</div>';
+                        }
+                        
+                        // Update step indicators
+                        updateStepIndicators(data.current_step);
+                    }
+                });
+        }
+        
+        window.onload = function() {
+            setupAutoRefresh();
+            // Initial refresh
+            refreshFlow();
+        };
+    </script>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>Protected Resource</h1>
-            <a href="/logout" class="btn logout-btn">Logout</a>
+            <div>
+                <a href="/" class="btn">Home</a>
+                <a href="/logout" class="btn logout-btn">Logout</a>
+            </div>
         </div>
         
         <div class="user-info">
             <h2>Hi, {{ user.username }}!</h2>
             <p>Email: {{ user.email }}</p>
+            
+            {% if user.metadata %}
+            <div class="metadata">
+                <h3>User Metadata:</h3>
+                <ul>
+                    {% if user.metadata.firstname %}
+                        <li><strong>First Name:</strong> {{ user.metadata.firstname }}</li>
+                    {% endif %}
+                    {% if user.metadata.lastname %}
+                        <li><strong>Last Name:</strong> {{ user.metadata.lastname }}</li>
+                    {% endif %}
+                    {% if user.metadata.role %}
+                        <li><strong>Role:</strong> {{ user.metadata.role }}</li>
+                    {% endif %}
+                    {% for key, value in user.metadata.items() %}
+                        {% if key not in ['firstname', 'lastname', 'role'] %}
+                            <li><strong>{{ key }}:</strong> {{ value }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
         </div>
         
         <div class="scopes">
@@ -94,14 +326,55 @@
             {% endif %}
         </div>
         
+        <h2>OAuth 2.0 Flow Completed Successfully!</h2>
+        
+        <div class="flow-container">
+            <div class="flow-steps">
+                <h3>OAuth 2.0 Steps</h3>
+                <div class="flow-step completed" data-step="1">
+                    <span class="step-number completed">1</span>
+                    <strong>Client Authorization Request</strong>
+                    <p>Client requests authorization from the user</p>
+                </div>
+                <div class="flow-step completed" data-step="2">
+                    <span class="step-number completed">2</span>
+                    <strong>User Authentication</strong>
+                    <p>User logs in at the authorization server</p>
+                </div>
+                <div class="flow-step completed" data-step="3">
+                    <span class="step-number completed">3</span>
+                    <strong>User Consent</strong>
+                    <p>User approves the requested permissions</p>
+                </div>
+                <div class="flow-step completed" data-step="4">
+                    <span class="step-number completed">4</span>
+                    <strong>Authorization Code Grant</strong>
+                    <p>Server redirects back with an authorization code</p>
+                </div>
+                <div class="flow-step completed" data-step="5">
+                    <span class="step-number completed">5</span>
+                    <strong>Token Exchange</strong>
+                    <p>Client exchanges the code for an access token</p>
+                </div>
+                <div class="flow-step completed" data-step="6">
+                    <span class="step-number completed">6</span>
+                    <strong>Resource Access</strong>
+                    <p>Client uses the token to access protected resources</p>
+                </div>
+            </div>
+            
+            <div class="flow-details">
+                <h3>OAuth Flow Log <button onclick="refreshFlow()" class="btn refresh-btn">Refresh</button></h3>
+                <div id="flow-log" class="flow-log">
+                    <div class="log-entry">Loading OAuth flow logs...</div>
+                </div>
+            </div>
+        </div>
+        
         <div class="token-info">
             <h2>Access Token Information:</h2>
             <pre>{{ token | tojson(indent=2) }}</pre>
         </div>
-        
-        <p style="margin-top: 20px;">
-            <a href="/" class="btn">Back to Home</a>
-        </p>
     </div>
 </body>
 </html>

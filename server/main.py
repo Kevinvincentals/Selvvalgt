@@ -27,6 +27,11 @@ USERS_DB = {
         "username": "user",
         "password": "password",  # In a real app, this would be hashed
         "email": "user@example.com",
+        "metadata": {
+            "firstname": "Lars",
+            "lastname": "Jensen",
+            "role": "admin"
+        },
         "disabled": False,
     }
 }
@@ -235,11 +240,24 @@ with open(consent_template_path, "w") as f:
             margin: 20px 0;
         }
         .scope-item {
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #1890ff;
+        }
+        .scope-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .scope-description {
+            color: #666;
+            font-size: 0.9em;
         }
         .buttons {
             display: flex;
             justify-content: space-between;
+            margin-top: 30px;
         }
         .allow-btn {
             background-color: #4CAF50;
@@ -268,7 +286,8 @@ with open(consent_template_path, "w") as f:
             <h3>The application is requesting:</h3>
             {% for scope in scopes %}
             <div class="scope-item">
-                <strong>{{ scope }}</strong>
+                <div class="scope-name">{{ scope.name }}</div>
+                <div class="scope-description">{{ scope.description }}</div>
             </div>
             {% endfor %}
         </div>
@@ -381,6 +400,22 @@ async def authorize_post(
     
     # Show consent page
     scopes = scope.split() if scope else []
+    
+    # Prepare scope descriptions for the consent page
+    scope_descriptions = {
+        "profile": "Access to your basic profile information",
+        "email": "Access to your email address",
+        "metadata": "Access to additional user information (name, role, etc.)",
+    }
+    
+    # Create list of scopes with descriptions
+    scope_info = []
+    for s in scopes:
+        scope_info.append({
+            "name": s,
+            "description": scope_descriptions.get(s, f"Access to {s} data")
+        })
+    
     return templates.TemplateResponse(
         "consent.html", 
         {
@@ -389,7 +424,7 @@ async def authorize_post(
             "redirect_uri": redirect_uri,
             "state": state,
             "scope": scope,
-            "scopes": scopes,
+            "scopes": scope_info,
             "username": username
         }
     )
@@ -568,11 +603,19 @@ async def userinfo(request: Request):
             content={"error": "user_not_found"}
         )
     
-    # Return the user information
-    return {
+    # Construct the response based on authorized scopes
+    response = {
         "username": user_data["username"],
         "email": user_data["email"]
     }
+    
+    # Check if the metadata scope was authorized
+    scopes = token_data.get("scope", "").split()
+    if "metadata" in scopes:
+        # Add metadata to the response
+        response["metadata"] = user_data.get("metadata", {})
+    
+    return response
 
 if __name__ == "__main__":
     import uvicorn
