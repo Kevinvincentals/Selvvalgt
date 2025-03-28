@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OAuth 2.0 Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .user-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9f7ef;
+            border-radius: 4px;
+        }
+        pre {
+            background-color: #f6f8fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>OAuth 2.0 Demo Client</h1>
+        {% if user %}
+            <div class="user-info">
+                <h2>You are logged in!</h2>
+                <p>Username: {{ user.username }}</p>
+                <p>Email: {{ user.email }}</p>
+            </div>
+            <a href="/logout" class="btn">Logout</a>
+        {% else %}
+            <p>This is a demonstration of the OAuth 2.0 Authorization Code flow.</p>
+            <p>Click the button below to log in with the OAuth 2.0 server.</p>
+            <a href="/login" class="btn">Login with OAuth</a>
+        {% endif %}
+        
+        <div class="info">
+            <h2>OAuth 2.0 Flow</h2>
+            <p>This example demonstrates the OAuth 2.0 Authorization Code grant type:</p>
+            <ol>
+                <li>Client requests authorization from the user</li>
+                <li>User authenticates and approves the authorization</li>
+                <li>Authorization server sends an authorization code to the client</li>
+                <li>Client exchanges the code for an access token</li>
+                <li>Client uses the access token to access protected resources</li>
+            </ol>
+        </div>
+        
+        {% if token %}
+            <div class="info">
+                <h2>Access Token</h2>
+                <pre>{{ token | tojson(indent=2) }}</pre>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

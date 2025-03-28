@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Protected Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .user-info {
+            background-color: #e9f7ef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .scopes {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .scope-item {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        .token-info {
+            background-color: #f1f8ff;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        pre {
+            background-color: #f6f8fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .logout-btn {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Protected Resource</h1>
+            <a href="/logout" class="btn logout-btn">Logout</a>
+        </div>
+        
+        <div class="user-info">
+            <h2>Hi, {{ user.username }}!</h2>
+            <p>Email: {{ user.email }}</p>
+        </div>
+        
+        <div class="scopes">
+            <h2>Authorized Scopes:</h2>
+            {% if scopes %}
+                {% for scope in scopes %}
+                    <div class="scope-item">{{ scope }}</div>
+                {% endfor %}
+            {% else %}
+                <p>No scopes were authorized.</p>
+            {% endif %}
+        </div>
+        
+        <div class="token-info">
+            <h2>Access Token Information:</h2>
+            <pre>{{ token | tojson(indent=2) }}</pre>
+        </div>
+        
+        <p style="margin-top: 20px;">
+            <a href="/" class="btn">Back to Home</a>
+        </p>
+    </div>
+</body>
+</html>

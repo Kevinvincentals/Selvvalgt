@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OAuth 2.0 Consent</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .scopes {
+            margin: 20px 0;
+        }
+        .scope-item {
+            margin-bottom: 10px;
+        }
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+        .allow-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .deny-btn {
+            background-color: #f44336;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Authorization Request</h1>
+        <p>The application <strong>{{ client_id }}</strong> is requesting access to your account.</p>
+        
+        <div class="scopes">
+            <h3>The application is requesting:</h3>
+            {% for scope in scopes %}
+            <div class="scope-item">
+                <strong>{{ scope }}</strong>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="buttons">
+            <form method="post" action="/approve">
+                <input type="hidden" name="client_id" value="{{ client_id }}">
+                <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
+                <input type="hidden" name="state" value="{{ state }}">
+                <input type="hidden" name="scope" value="{{ scope }}">
+                <input type="hidden" name="username" value="{{ username }}">
+                <button class="allow-btn" type="submit">Allow</button>
+            </form>
+            
+            <form method="get" action="/deny">
+                <input type="hidden" name="client_id" value="{{ client_id }}">
+                <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
+                <input type="hidden" name="state" value="{{ state }}">
+                <button class="deny-btn" type="submit">Deny</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
